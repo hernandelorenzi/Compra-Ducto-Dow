@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo Financiero Explora</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;padding:12px;background:#fff;color:#1a1a1a}
+@media(prefers-color-scheme:dark){body{background:#1e1e1e;color:#f0f0ee}}
+:root{--bg:#fff;--bg2:#f5f5f3;--bg3:#e8e8e5;--txt:#1a1a1a;--txt2:#666;--txt3:#aaa;--brd:rgba(0,0,0,0.12);--brd2:rgba(0,0,0,0.25);--r:8px;--rl:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#1e1e1e;--bg2:#2a2a2a;--bg3:#363636;--txt:#f0f0ee;--txt2:#aaa;--txt3:#666;--brd:rgba(255,255,255,0.12);--brd2:rgba(255,255,255,0.25)}}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--brd);margin-bottom:1.5rem}
+.tab{padding:8px 14px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--txt2);border-bottom:3px solid transparent;margin-bottom:-1px;border-radius:var(--r) var(--r) 0 0}
+.tab:hover{background:var(--bg2);color:var(--txt)}
+.tab.active{color:var(--txt);border-bottom:3px solid var(--txt);font-weight:500;background:var(--bg2)}
+.panel{display:none}.panel.active{display:block}
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.mc{background:var(--bg2);border-radius:var(--r);padding:.9rem;text-align:center}
+.ml{font-size:11px;color:var(--txt2);margin-bottom:5px}
+.mv{font-size:19px;font-weight:500;color:var(--txt)}
+.pos{color:#0F6E56!important}.neg{color:#993C1D!important}
+.sec{font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.05em;margin:1.2rem 0 8px}
+.sec:first-child{margin-top:0}
+.tw{overflow-x:auto;margin-bottom:1.5rem}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:right;padding:6px 8px;color:var(--txt2);font-weight:500;border-bottom:1px solid var(--brd)}
+th:first-child{text-align:left}
+td{text-align:right;padding:5px 8px;border-bottom:0.5px solid var(--brd);color:var(--txt)}
+td:first-child{text-align:left;color:var(--txt2)}
+tr.tot td{font-weight:700;border-top:1px solid var(--brd2)}
+tr.ok td{color:#0F6E56;font-weight:700}
+.pb{height:22px;background:var(--bg2);border-radius:var(--r);overflow:hidden;margin-bottom:1.5rem;position:relative}
+.pbf{height:100%;border-radius:var(--r);transition:width .4s}
+.pbl{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--txt2)}
+.cw{position:relative;margin-bottom:1.5rem}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1rem}
+.sbar{background:var(--bg2);border-radius:var(--rl);padding:1rem;margin-bottom:1.5rem}
+.bgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.bc{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r);border:1.5px solid var(--brd);cursor:pointer;background:var(--bg);user-select:none}
+.qbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.qb{font-size:12px;padding:5px 12px;border-radius:var(--r);border:1px solid var(--brd2);background:none;cursor:pointer;color:var(--txt2)}
+.qb:hover{background:var(--bg3)}
+.pt{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1.5rem}
+.pt th{text-align:left;padding:6px 10px;font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--brd);background:var(--bg2)}
+.pt th:nth-child(2),.pt th:nth-child(3),.pt th:nth-child(4){text-align:center}
+.pt td{padding:6px 10px;border-bottom:0.5px solid var(--brd);vertical-align:middle;color:var(--txt)}
+.pt td:first-child{color:var(--txt2);font-size:12px}
+.pt td:nth-child(2){text-align:center;color:var(--txt3);font-size:12px}
+.pt td:nth-child(3),.pt td:nth-child(4){text-align:center}
+.pt tr.gh td{background:var(--bg2);font-size:11px;font-weight:500;color:var(--txt2);text-transform:uppercase;letter-spacing:.04em;padding:8px 10px 5px;border-top:1px solid var(--brd2)}
+.gdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.pt input[type=text]{width:100px;padding:4px 6px;border:1px solid var(--brd2);border-radius:var(--r);background:var(--bg);color:var(--txt);font-size:13px;text-align:right}
+.pt input:focus{outline:none;border-color:#378ADD}
+.ds{display:flex;gap:4px;justify-content:center}
+.ds select{font-size:12px;padding:3px 5px;border-radius:var(--r);border:1px solid var(--brd2);background:var(--bg);color:var(--txt);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="sbar">
+  <div class="sec" style="margin:0">Negocios activos en el escenario</div>
+  <div class="bgrid" id="bgrid"></div>
+  <div class="qbs">
+    <button class="qb" onclick="setAll(true)">Activar todos</button>
+    <button class="qb" onclick="setAll(false)">Desactivar todos</button>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('resumen')">Resumen</button>
+  <button class="tab" onclick="showTab('flujo')">Flujo de caja</button>
+  <button class="tab" onclick="showTab('sensibilidad')">Sensibilidad</button>
+  <button class="tab" onclick="showTab('parametros')">Parámetros</button>
+</div>
+<div id="resumen" class="panel active">
+  <div class="mg">
+    <div class="mc"><div class="ml">VAN (10 años)</div><div class="mv" id="m-van">—</div></div>
+    <div class="mc"><div class="ml">TIR</div><div class="mv" id="m-tir">—</div></div>
+    <div class="mc"><div class="ml">Payback</div><div class="mv" id="m-pb">—</div></div>
+    <div class="mc"><div class="ml">Ingreso anual (régimen)</div><div class="mv" id="m-ing">—</div></div>
+  </div>
+  <div class="sec" style="margin-top:0">Recupero acumulado de inversión</div>
+  <div class="pb"><div class="pbf" id="pbf"></div><div class="pbl" id="pbl"></div></div>
+  <div class="sec">Ingresos y costos anuales en régimen</div>
+  <div id="waterfall"></div>
+</div>
+<div id="flujo" class="panel">
+  <div class="sec" style="margin-top:0">Flujo de caja anual y acumulado (usd)</div>
+  <div class="cw" style="height:280px"><canvas id="cFlujo"></canvas></div>
+  <div class="tw"><table id="ftable"></table></div>
+</div>
+<div id="sensibilidad" class="panel">
+  <p style="font-size:13px;color:var(--txt2);margin-bottom:1.2rem">Variación ante cambios en parámetros clave. Línea punteada roja = WACC actual.</p>
+  <div class="sg">
+    <div><div class="sec" style="margin-top:0">VAN vs tasa de descuento (WACC)</div><div class="cw" style="height:200px"><canvas id="sTasa"></canvas></div></div>
+    <div><div class="sec" style="margin-top:0">VAN vs TNA (costo cap. trabajo)</div><div class="cw" style="height:200px"><canvas id="sTNA"></canvas></div></div>
+    <div><div class="sec" style="margin-top:0">TIR vs costo de interconexión</div><div class="cw" style="height:200px"><canvas id="sTIRinv"></canvas></div></div>
+    <div><div class="sec" style="margin-top:0">TIR vs delay inicio operaciones</div><div class="cw" style="height:200px"><canvas id="sTIRdelay"></canvas></div></div>
+  </div>
+</div>
+<div id="parametros" class="panel">
+  <div class="tw">
+    <table class="pt">
+      <thead><tr>
+        <th style="width:36%">Descripción</th>
+        <th style="width:13%">Unidad</th>
+        <th style="width:18%">Valor</th>
+        <th style="width:33%">Fecha inicio</th>
+      </tr></thead>
+      <tbody id="ptbody"></tbody>
+    </table>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+var MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+var SY=2026, NY=10;
+var NEG=[
+  {id:'bio', name:'Biodiesel logística',   color:'#1D9E75',bc:'#0F6E56'},
+  {id:'binc',name:'Biodiesel incremental', color:'#085041',bc:'#04342C'},
+  {id:'buk', name:'Bunker',                color:'#378ADD',bc:'#185FA5'},
+  {id:'are', name:'ARE',                   color:'#7F77DD',bc:'#534AB7'},
+  {id:'gli', name:'Glicerina',             color:'#D85A30',bc:'#993C1D'},
+  {id:'gas', name:'Gasoil',                color:'#BA7517',bc:'#854F0B'},
+  {id:'seb', name:'Sebo animal',           color:'#D4537E',bc:'#993556'},
+];
+var PRM=[
+  {id:'compra',   lbl:'Compra instalación DOW',          un:'usd',     def:350000, grp:'Inversión',                        hd:true, dd:{y:2026,m:4}},
+  {id:'intercon', lbl:'Inversión interconexión ductos',   un:'usd',     def:800000, grp:null,                               hd:true, dd:{y:2026,m:4}},
+  {id:'interconm',lbl:'Duración obra interconexión',      un:'meses',   def:10,     grp:null,                               hd:false},
+  {id:'serv',     lbl:'Servidumbre de paso (Pampa)',      un:'usd/año', def:18000,  grp:'Costos operativos',                hd:true, dd:{y:2026,m:4}},
+  {id:'mant',     lbl:'Mantenimiento ductos/scrapper',    un:'usd/año', def:15000,  grp:null,                               hd:true, dd:{y:2026,m:4}},
+  {id:'otros',    lbl:'Otros fijos (seguros, etc.)',      un:'usd/año', def:7000,   grp:null,                               hd:true, dd:{y:2026,m:4}},
+  {id:'tumcf',    lbl:'TUM — cargo fijo por atraque',     un:'usd',     def:9000,   grp:'Parámetros TUM (muelle)',          hd:false},
+  {id:'tumtrn',   lbl:'TUM — tamaño útil buque (TRN)',    un:'tn',      def:15000,  grp:null,                               hd:false},
+  {id:'tumk',     lbl:'TUM — cargo variable (K)',         un:'usd/tn',  def:0.3,    grp:null,                               hd:false, dec:true},
+  {id:'tumtasa',  lbl:'TUM — tasa de descarga',           un:'tn/h',    def:150,    grp:null,                               hd:false},
+  {id:'bprecio',  lbl:'Costo biodiesel (cap. trabajo)',   un:'usd/tn',  def:1100,   grp:'Biodiesel — parámetro compartido', hd:false},
+  {id:'bvol',     lbl:'Volumen',                          un:'tn/año',  def:36000,  grp:'Biodiesel logística',              hd:true, dd:{y:2027,m:1}, dot:'bio'},
+  {id:'btar',     lbl:'Tarifa servicio',                  un:'usd/tn',  def:20,     grp:null,                               hd:false},
+  {id:'bcarga',   lbl:'Tn por carga (atraque)',            un:'tn',      def:3000,   grp:null,                               hd:false},
+  {id:'bdias',    lbl:'Días ciclo de cobro',               un:'días',    def:37,     grp:null,                               hd:false},
+  {id:'bivol',    lbl:'Volumen',                          un:'tn/mes',  def:2000,   grp:'Biodiesel incremental',            hd:true, dd:{y:2027,m:1}, dot:'binc'},
+  {id:'bicontr',  lbl:'Contribución marginal',            un:'usd/tn',  def:30,     grp:null,                               hd:false},
+  {id:'bicarga',  lbl:'Tn por carga (atraque)',            un:'tn',      def:2000,   grp:null,                               hd:false},
+  {id:'bidias',   lbl:'Días ciclo de cobro',               un:'días',    def:37,     grp:null,                               hd:false},
+  {id:'bukvol',   lbl:'Volumen',                          un:'tn/año',  def:8400,   grp:'Bunker',                           hd:true, dd:{y:2027,m:1}, dot:'buk'},
+  {id:'bukmar',   lbl:'Margen',                           un:'usd/tn',  def:80,     grp:null,                               hd:false},
+  {id:'bukcosto', lbl:'Costo del producto',               un:'usd/tn',  def:1200,   grp:null,                               hd:false},
+  {id:'bukcarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:350,    grp:null,                               hd:false},
+  {id:'bukdias',  lbl:'Días ciclo de cobro',               un:'días',    def:45,     grp:null,                               hd:false},
+  {id:'arevol',   lbl:'Volumen',                          un:'tn/año',  def:6000,   grp:'ARE',                              hd:true, dd:{y:2027,m:1}, dot:'are'},
+  {id:'aremar',   lbl:'Margen',                           un:'usd/tn',  def:40,     grp:null,                               hd:false},
+  {id:'arecosto', lbl:'Costo del producto',               un:'usd/tn',  def:750,    grp:null,                               hd:false},
+  {id:'arecarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:500,    grp:null,                               hd:false},
+  {id:'aredias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
+  {id:'glivol',   lbl:'Volumen',                          un:'tn/año',  def:4800,   grp:'Glicerina',                        hd:true, dd:{y:2027,m:1}, dot:'gli'},
+  {id:'glimar',   lbl:'Margen',                           un:'usd/tn',  def:30,     grp:null,                               hd:false},
+  {id:'glicosto', lbl:'Costo del producto',               un:'usd/tn',  def:400,    grp:null,                               hd:false},
+  {id:'glicarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:1000,   grp:null,                               hd:false},
+  {id:'glidias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
+  {id:'gasvol',   lbl:'Volumen',                          un:'tn/año',  def:12000,  grp:'Gasoil',                           hd:true, dd:{y:2027,m:1}, dot:'gas'},
+  {id:'gasmar',   lbl:'Margen',                           un:'usd/tn',  def:30,     grp:null,                               hd:false},
+  {id:'gascosto', lbl:'Costo del producto',               un:'usd/tn',  def:650,    grp:null,                               hd:false},
+  {id:'gascarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:3000,   grp:null,                               hd:false},
+  {id:'gasdias',  lbl:'Días ciclo de cobro',               un:'días',    def:75,     grp:null,                               hd:false},
+  {id:'sebvol',   lbl:'Volumen',                          un:'tn/año',  def:7200,   grp:'Sebo animal',                      hd:true, dd:{y:2027,m:1}, dot:'seb'},
+  {id:'sebmar',   lbl:'Margen',                           un:'usd/tn',  def:40,     grp:null,                               hd:false},
+  {id:'sebcosto', lbl:'Costo del producto',               un:'usd/tn',  def:850,    grp:null,                               hd:false},
+  {id:'sebcarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:600,    grp:null,                               hd:false},
+  {id:'sebdias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
+  {id:'wacc',     lbl:'Tasa de descuento / WACC',         un:'%',       def:12,     grp:'Financiero',                       hd:false},
+  {id:'tna',      lbl:'TNA pesos — costo cap. trabajo',   un:'%',       def:37,     grp:null,                               hd:false},
+  {id:'tc',       lbl:'Tipo de cambio ars/usd',           un:'ars/usd', def:1200,   grp:null,                               hd:false},
+  {id:'diasact',  lbl:'Días ciclo cobro (operación actual)',un:'días',   def:14,     grp:null,                               hd:false},
+];
+
+var V={}, D={};
+PRM.forEach(function(p){ V[p.id]=p.def; if(p.hd) D[p.id]={y:p.dd.y,m:p.dd.m}; });
+var ACT={};
+NEG.forEach(function(n){ ACT[n.id]=true; });
+var CH={};
+
+// ── Formatters ──────────────────────────────────────────────
+function ri(v){ return Math.round(v); }  // round to integer
+function nf(v){
+  if(v!==ri(v)) return v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3});
+  return ri(v).toLocaleString('es-AR');
+}
+function ff(v){ return (v<0?'-$':'$')+ri(Math.abs(v)).toLocaleString('es-AR'); }
+function fu(v){
+  var a=ri(Math.abs(v)), s=v<0?'-$':'$';
+  if(a>=1000000) return s+(a/1e6).toFixed(2)+'M';
+  if(a>=1000)    return s+ri(a/1000)+'K';
+  return s+a.toLocaleString('es-AR');
+}
+function pc(v){ return v.toFixed(1)+'%'; }
+function pi(s){
+  s=String(s).trim();
+  if(s.indexOf(',')>=0) return parseFloat(s.replace(/\./g,'').replace(',','.'));
+  return parseFloat(s);
+}
+function dark(){ return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches; }
+function cc(){ var d=dark(); return {grid:d?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)',tick:d?'#aaa':'#666'}; }
+
+// ── Date helpers ─────────────────────────────────────────────
+var NEGVOL={bio:'bvol',binc:'bivol',buk:'bukvol',are:'arevol',gli:'glivol',gas:'gasvol',seb:'sebvol'};
+function gsd(nid){ return D[NEGVOL[nid]]||{y:2027,m:1}; }
+function af(nid,yi){ var sd=gsd(nid),cy=SY+yi; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
+function cf(pid,yi){ var sd=D[pid],cy=SY+yi; if(!sd)return 1; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
+function icf(yi,meses){
+  meses=meses||10;
+  var sd=D['intercon'],cy=SY+yi;
+  var sa=sd.y*12+(sd.m-1), ea=sa+(meses-1);
+  var ys=cy*12, ye=cy*12+11;
+  return Math.max(0,Math.min(ea,ye)-Math.max(sa,ys)+1)/meses;
+}
+
+// ── Build param object ────────────────────────────────────────
+function gp(){
+  return {
+    compra:V.compra, intercon:V.intercon, interconm:V.interconm,
+    serv:V.serv, mant:V.mant, otros:V.otros,
+    tumcf:V.tumcf, tumtrn:V.tumtrn, tumk:V.tumk, tumtasa:V.tumtasa,
+    bprecio:V.bprecio,
+    bvol:V.bvol,   btar:V.btar,   bcarga:V.bcarga,   bdias:V.bdias,
+    bivol:V.bivol*12, bicontr:V.bicontr, bicarga:V.bicarga, bidias:V.bidias,
+    bukvol:V.bukvol, bukmar:V.bukmar, bukcosto:V.bukcosto, bukcarga:V.bukcarga, bukdias:V.bukdias,
+    arevol:V.arevol, aremar:V.aremar, arecosto:V.arecosto, arecarga:V.arecarga, aredias:V.aredias,
+    glivol:V.glivol, glimar:V.glimar, glicosto:V.glicosto, glicarga:V.glicarga, glidias:V.glidias,
+    gasvol:V.gasvol, gasmar:V.gasmar, gascosto:V.gascosto, gascarga:V.gascarga, gasdias:V.gasdias,
+    sebvol:V.sebvol, sebmar:V.sebmar, sebcosto:V.sebcosto, sebcarga:V.sebcarga, sebdias:V.sebdias,
+    wacc:V.wacc/100, tna:V.tna/100, tc:V.tc, diasact:V.diasact
+  };
+}
+
+// ── TUM ───────────────────────────────────────────────────────
+function tumPA(tnCarga,p){
+  var cf=p.tumcf||9000, trn=p.tumtrn||15000, k=p.tumk||0.3, tasa=p.tumtasa||150;
+  return cf + trn*k*(tnCarga/tasa/24);
+}
+function calcTUM(p,act,yi){
+  var cfg={
+    bio:{vol:p.bvol,carga:p.bcarga}, binc:{vol:p.bivol,carga:p.bicarga},
+    buk:{vol:p.bukvol,carga:p.bukcarga}, are:{vol:p.arevol,carga:p.arecarga},
+    gli:{vol:p.glivol,carga:p.glicarga}, gas:{vol:p.gasvol,carga:p.gascarga},
+    seb:{vol:p.sebvol,carga:p.sebcarga}
+  };
+  var t=0;
+  NEG.forEach(function(n){
+    if(!act[n.id]) return;
+    var c=cfg[n.id], frac=(yi===undefined?1:af(n.id,yi));
+    t+=tumPA(c.carga,p)*(c.vol*frac/c.carga);
+  });
+  return t;
+}
+
+// ── Costo financiero ──────────────────────────────────────────
+function calcCFin(p,act,yi){
+  var items=[
+    {id:'bio', vol:p.bvol,   costo:p.bprecio,  dias:p.bdias},
+    {id:'binc',vol:p.bivol,  costo:p.bprecio,  dias:p.bidias},
+    {id:'buk', vol:p.bukvol, costo:p.bukcosto, dias:p.bukdias},
+    {id:'are', vol:p.arevol, costo:p.arecosto, dias:p.aredias},
+    {id:'gli', vol:p.glivol, costo:p.glicosto, dias:p.glidias},
+    {id:'gas', vol:p.gasvol, costo:p.gascosto, dias:p.gasdias},
+    {id:'seb', vol:p.sebvol, costo:p.sebcosto, dias:p.sebdias},
+  ];
+  var total=0;
+  items.forEach(function(it){
+    if(!act[it.id]) return;
+    var frac=(yi===undefined?1:af(it.id,yi));
+    var diff=it.dias-p.diasact;
+    if(diff<=0) return;
+    total+=(it.vol*frac/365)*diff*it.costo*p.tna;
+  });
+  return total;
+}
+
+// ── Ingresos ──────────────────────────────────────────────────
+function fiCalc(p){
+  return {
+    bio:p.bvol*p.btar, binc:p.bivol*p.bicontr,
+    buk:p.bukvol*p.bukmar, are:p.arevol*p.aremar,
+    gli:p.glivol*p.glimar, gas:p.gasvol*p.gasmar,
+    seb:p.sebvol*p.sebmar
+  };
+}
+
+// ── Modelo ────────────────────────────────────────────────────
+function calcModel(p,act,dOverride){
+  act=act||ACT;
+  var savedD=null;
+  if(dOverride){
+    savedD={};
+    Object.keys(D).forEach(function(k){ savedD[k]={y:D[k].y,m:D[k].m}; });
+    Object.keys(dOverride).forEach(function(k){ D[k]=dOverride[k]; });
+  }
+  var fi=fiCalc(p), cfs=[];
+  for(var yi=0;yi<NY;yi++){
+    var cinv=(D.compra&&(SY+yi)===D.compra.y?p.compra:0)+p.intercon*icf(yi,p.interconm);
+    var opc=p.serv*cf('serv',yi)+p.mant*cf('mant',yi)+p.otros*cf('otros',yi);
+    var t=calcTUM(p,act,yi);
+    var cfin=calcCFin(p,act,yi);
+    var ing=0; NEG.forEach(function(n){ if(act[n.id]) ing+=fi[n.id]*af(n.id,yi); });
+    cfs.push(-cinv+ing-opc-t-cfin);
+  }
+  if(savedD){ Object.keys(savedD).forEach(function(k){ D[k]=savedD[k]; }); }
+  var van=cfs.reduce(function(s,c,i){ return s+c/Math.pow(1+p.wacc,i); },0);
+  function tirCalc(flows){
+    if(flows.reduce(function(s,c){ return s+(c>0?c:0); },0)<=0) return null;
+    var lo=-0.9999,hi=100,mid,npv,it=0;
+    if(flows.reduce(function(s,c,i){ return s+c/Math.pow(1+lo,i); },0)<0) return null;
+    if(flows.reduce(function(s,c,i){ return s+c/Math.pow(1+hi,i); },0)>0) return null;
+    do{ mid=(lo+hi)/2; npv=flows.reduce(function(s,c,i){ return s+c/Math.pow(1+mid,i); },0);
+      if(npv>0)lo=mid; else hi=mid; it++;
+    }while(Math.abs(npv)>0.1&&it<500);
+    return mid;
+  }
+  var tir=tirCalc(cfs),acc=0,pb=null,acum=[];
+  for(var j=0;j<NY;j++){
+    acc+=cfs[j]; acum.push(acc);
+    if(acc>=0&&pb===null&&j>0){ pb=(j-1)+(-(acc-cfs[j])/cfs[j]); }
+  }
+  var tumR=calcTUM(p,act), cFinR=calcCFin(p,act);
+  var opR=p.serv+p.mant+p.otros, ingR=0;
+  NEG.forEach(function(n){ if(act[n.id]) ingR+=fi[n.id]; });
+  return {fi:fi, ingR:ingR, tum:tumR, opR:opR, cFin:cFinR,
+    costoR:opR+tumR+cFinR, fcR:ingR-opR-tumR-cFinR,
+    cfs:cfs, acum:acum, van:van, tir:tir, pb:pb};
+}
+
+// ── Tabla parámetros ──────────────────────────────────────────
+function buildPT(){
+  var tb=document.getElementById('ptbody'); tb.innerHTML='';
+  PRM.forEach(function(pr){
+    if(pr.grp!==null){
+      var hr=document.createElement('tr'); hr.className='gh';
+      var dc=''; if(pr.dot){ var ng=NEG.filter(function(n){return n.id===pr.dot;})[0]; if(ng)dc=ng.color; }
+      hr.innerHTML='<td colspan="4">'+(dc?'<span class="gdot" style="background:'+dc+'"></span>':'')+pr.grp+'</td>';
+      tb.appendChild(hr);
+    }
+    var row=document.createElement('tr');
+    var t1=document.createElement('td'); t1.textContent=pr.lbl; row.appendChild(t1);
+    var t2=document.createElement('td'); t2.textContent=pr.un; row.appendChild(t2);
+    var t3=document.createElement('td');
+    var inp=document.createElement('input'); inp.type='text';
+    inp.setAttribute('data-id',pr.id);
+    inp.value=pr.dec ? pr.def.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}) : nf(pr.def);
+    inp.addEventListener('focus',function(){ this.value=V[this.getAttribute('data-id')]; });
+    inp.addEventListener('blur',function(){
+      var pid=this.getAttribute('data-id'), v=pi(this.value);
+      if(!isNaN(v)&&v>=0){
+        V[pid]=v;
+        var pr2=PRM.filter(function(p){return p.id===pid;})[0];
+        this.value=pr2&&pr2.dec ? v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}) : nf(v);
+        update();
+      } else {
+        var pr3=PRM.filter(function(p){return p.id===pid;})[0];
+        this.value=pr3&&pr3.dec ? V[pid].toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}) : nf(V[pid]);
+      }
+    });
+    inp.addEventListener('keydown',function(e){ if(e.key==='Enter')this.blur(); });
+    t3.appendChild(inp); row.appendChild(t3);
+    var t4=document.createElement('td');
+    if(pr.hd){
+      var sd=D[pr.id], wr=document.createElement('div'); wr.className='ds';
+      var ms=document.createElement('select');
+      MO.forEach(function(m,i){ var o=document.createElement('option'); o.value=i+1; o.textContent=m; if(sd.m===i+1)o.selected=true; ms.appendChild(o); });
+      ms.addEventListener('change',(function(pid){ return function(e){ D[pid].m=parseInt(e.target.value); update(); }; })(pr.id));
+      var ys=document.createElement('select');
+      for(var y=2026;y<=2032;y++){ var o=document.createElement('option'); o.value=y; o.textContent=y; if(sd.y===y)o.selected=true; ys.appendChild(o); }
+      ys.addEventListener('change',(function(pid){ return function(e){ D[pid].y=parseInt(e.target.value); update(); }; })(pr.id));
+      wr.appendChild(ms); wr.appendChild(ys); t4.appendChild(wr);
+    } else { t4.style.color='var(--txt3)'; t4.textContent='—'; }
+    row.appendChild(t4); tb.appendChild(row);
+  });
+}
+
+// ── Selector de negocios ──────────────────────────────────────
+function buildBG(p){
+  var fi_=fiCalc(p), g=document.getElementById('bgrid'); g.innerHTML='';
+  NEG.forEach(function(n){
+    var on=ACT[n.id], sd=gsd(n.id), d=document.createElement('div');
+    d.className='bc';
+    d.style.background=on?n.color+'22':'var(--bg2)';
+    d.style.borderColor=on?n.bc:'var(--brd)';
+    d.innerHTML=
+      '<span style="width:10px;height:10px;border-radius:50%;flex-shrink:0;background:'+(on?n.color:'#999')+'"></span>'+
+      '<span style="font-size:11px;font-weight:500;color:'+(on?n.bc:'var(--txt2)')+'">'+n.name+'</span>'+
+      '<span style="font-size:10px;margin-left:auto;text-align:right;color:'+(on?n.bc:'var(--txt3)')+'">'+
+        (on?fu(fi_[n.id])+'/año':'—')+'<br><span style="font-size:9px;opacity:.8">desde '+MO[sd.m-1]+' '+sd.y+'</span></span>';
+    d.onclick=(function(nid){ return function(){ ACT[nid]=!ACT[nid]; update(); }; })(n.id);
+    g.appendChild(d);
+  });
+}
+
+// ── Resumen ───────────────────────────────────────────────────
+function renderR(p,m){
+  var mv=document.getElementById('m-van'); mv.textContent=fu(m.van); mv.className='mv '+(m.van>=0?'pos':'neg');
+  var mt=document.getElementById('m-tir'); mt.textContent=m.tir!==null?pc(m.tir*100):'N/A'; mt.className='mv '+(m.tir!==null&&m.tir>=p.wacc?'pos':'neg');
+  document.getElementById('m-pb').textContent=m.pb?m.pb.toFixed(1)+' años':'> '+NY+' años';
+  document.getElementById('m-ing').textContent=fu(m.ingR);
+  var f=document.getElementById('pbf');
+  f.style.width=(m.pb?Math.min(100,m.pb/NY*100):100)+'%';
+  f.style.background=m.pb?'#1D9E75':'#D85A30';
+  document.getElementById('pbl').textContent=m.pb?m.pb.toFixed(1)+' años':'> '+NY+' años';
+
+  var an=NEG.filter(function(n){return ACT[n.id];});
+  var rows=[];
+  an.forEach(function(n){ rows.push({lbl:n.name,val:m.fi[n.id],color:n.color,type:'ing'}); });
+  rows.push({lbl:'Total ingresos',val:m.ingR,color:'#1D9E75',type:'subtotal'});
+  [{lbl:'Servidumbre de paso (Pampa)',val:p.serv},
+   {lbl:'TUM muelle',val:m.tum},
+   {lbl:'Mantenimiento ductos',val:p.mant},
+   {lbl:'Otros fijos',val:p.otros},
+   {lbl:'Costo financiero cap. trabajo',val:m.cFin}
+  ].forEach(function(c){ rows.push({lbl:c.lbl,val:-c.val,color:'#888780',type:'cost'}); });
+  rows.push({lbl:'Total costos',val:-m.costoR,color:'#5F5E5A',type:'subtotal'});
+  rows.push({lbl:'Flujo operativo anual',val:m.fcR,color:m.fcR>=0?'#0F6E56':'#993C1D',type:'result'});
+
+  var maxAbs=Math.max.apply(null,rows.map(function(r){return Math.abs(r.val);}));
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  rows.forEach(function(r){
+    var isSub=r.type==='subtotal', isRes=r.type==='result';
+    var indent=isSub||isRes?'':'padding-left:20px;';
+    var fw=isSub||isRes?'font-weight:700;':'font-weight:400;';
+    var bt=isSub||isRes?'border-top:1px solid var(--brd2);':'';
+    var pct=Math.round(Math.abs(r.val)/maxAbs*100);
+    var valStr=r.type==='cost'?'-'+ff(Math.abs(r.val)):ff(r.val);
+    var valColor=r.type==='cost'?'#993C1D':(r.val>=0?'#0F6E56':'#993C1D');
+    html+='<tr style="'+bt+'">';
+    html+='<td style="padding:5px 8px;width:30%;'+fw+indent+'color:var(--txt2)">'+r.lbl+'</td>';
+    html+='<td style="padding:5px 8px;width:50%"><div style="background:var(--bg2);border-radius:3px;height:14px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+r.color+';border-radius:3px;opacity:'+(isRes?1:0.8)+'"></div></div></td>';
+    html+='<td style="padding:5px 8px;width:20%;text-align:right;'+fw+'color:'+valColor+'">'+valStr+'</td>';
+    html+='</tr>';
+  });
+  html+='</table>';
+  document.getElementById('waterfall').innerHTML=html;
+}
+
+// ── Flujo ─────────────────────────────────────────────────────
+function renderF(m){
+  var c=cc(), yrs=Array.from({length:NY},function(_,i){return SY+i;});
+  if(CH.fl) CH.fl.destroy();
+  CH.fl=new Chart(document.getElementById('cFlujo'),{
+    type:'bar',
+    data:{labels:yrs,datasets:[
+      {data:m.cfs,backgroundColor:m.cfs.map(function(v){return v>=0?'#378ADD':'#D85A30';}),borderRadius:4,yAxisID:'y'},
+      {data:m.acum,type:'line',borderColor:'#7F77DD',backgroundColor:'transparent',pointBackgroundColor:'#7F77DD',tension:0.3,yAxisID:'y'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:function(v){return fu(v);},color:c.tick},grid:{color:c.grid}},x:{grid:{display:false},ticks:{color:c.tick}}}}
+  });
+  var h='<thead><tr><th>Concepto</th>'+yrs.map(function(y){return'<th>'+y+'</th>';}).join('')+'</tr></thead>';
+  var b='<tbody>'+
+    '<tr><td>FC anual</td>'+m.cfs.map(function(v){return'<td style="color:'+(v>=0?'#1D9E75':'#D85A30')+'">'+fu(v)+'</td>';}).join('')+'</tr>'+
+    '<tr class="ok"><td>FC acumulado</td>'+m.acum.map(function(v){return'<td style="color:'+(v>=0?'#1D9E75':'#D85A30')+'">'+fu(v)+'</td>';}).join('')+'</tr></tbody>';
+  document.getElementById('ftable').innerHTML=h+b;
+}
+
+// ── Sensibilidad ──────────────────────────────────────────────
+function mkSensChart(id,labels,data,yLabel,waccRef,c){
+  if(CH[id]) CH[id].destroy();
+  var isVAN=yLabel.indexOf('VAN')>=0;
+  var ds=[{data:data,borderColor:'#378ADD',backgroundColor:'transparent',
+    pointBackgroundColor:data.map(function(v){return v===null?'transparent':(v>=0?'#1D9E75':'#D85A30');}),
+    tension:0.3,pointRadius:4,spanGaps:false}];
+  if(waccRef!==null) ds.push({data:labels.map(function(){return waccRef;}),borderColor:'#D85A30',borderDash:[4,3],borderWidth:1.5,pointRadius:0});
+  CH[id]=new Chart(document.getElementById(id),{
+    type:'line',data:{labels:labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{title:{display:true,text:yLabel,font:{size:10},color:c.tick},
+        ticks:{callback:function(v){return v.toFixed(1)+(isVAN?'M':'%');},color:c.tick},grid:{color:c.grid}},
+        x:{grid:{display:false},ticks:{maxRotation:45,color:c.tick}}}}
+  });
+}
+
+function renderS(p){
+  var c=cc();
+  var waccs=[5,7,9,11,13,15,17,20,25];
+  mkSensChart('sTasa',waccs.map(function(v){return v+'%';}),waccs.map(function(v){return calcModel(Object.assign({},p,{wacc:v/100})).van/1e6;}),'VAN (M usd)',null,c);
+  var tnas=[10,15,20,25,30,35,40,45,50,55,60];
+  mkSensChart('sTNA',tnas.map(function(v){return v+'%';}),tnas.map(function(v){return calcModel(Object.assign({},p,{tna:v/100})).van/1e6;}),'VAN (M usd)',null,c);
+  var invs=[400,500,600,700,800,900,1000,1100,1200,1300,1400];
+  mkSensChart('sTIRinv',invs.map(function(v){return'$'+v+'K';}),invs.map(function(v){var m=calcModel(Object.assign({},p,{intercon:v*1000}));return m.tir!==null?m.tir*100:null;}),'TIR (%)',p.wacc*100,c);
+  var delays=[0,1,2,3,4,5,6,9,12];
+  var volKeys=['bvol','bivol','bukvol','arevol','glivol','gasvol','sebvol'];
+  mkSensChart('sTIRdelay',delays.map(function(v){return v===0?'Sin delay':'+'+v+'m';}),
+    delays.map(function(del){
+      var dOv={};
+      volKeys.forEach(function(k){ var sd=D[k]||{y:2027,m:1},am=sd.m-1+del,ay=sd.y+Math.floor(am/12); dOv[k]={y:ay,m:(am%12)+1}; });
+      var m=calcModel(p,ACT,dOv); return m.tir!==null?m.tir*100:null;
+    }),'TIR (%)',p.wacc*100,c);
+}
+
+// ── Control ───────────────────────────────────────────────────
+function update(){ var p=gp(),m=calcModel(p); buildBG(p); renderR(p,m); renderF(m); renderS(p); }
+function setAll(v){ NEG.forEach(function(n){ACT[n.id]=v;}); update(); }
+function showTab(id){
+  var ids=['resumen','flujo','sensibilidad','parametros'];
+  document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('active',ids[i]===id); });
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active',p.id===id); });
+}
+buildPT(); update();
+</script>
+</body>
+</html>
