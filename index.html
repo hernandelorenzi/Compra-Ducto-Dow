@@ -133,7 +133,7 @@ var PRM=[
   {id:'tumcf',    lbl:'TUM — cargo fijo por atraque',     un:'usd',     def:9000,   grp:'Parámetros TUM (muelle)',          hd:false},
   {id:'tumtrn',   lbl:'TUM — tamaño útil buque (TRN)',    un:'tn',      def:15000,  grp:null,                               hd:false},
   {id:'tumk',     lbl:'TUM — cargo variable (K)',         un:'usd/tn',  def:0.3,    grp:null,                               hd:false, dec:true},
-  {id:'tumtasa',  lbl:'TUM — tasa de descarga',           un:'tn/h',    def:150,    grp:null,                               hd:false},
+  {id:'tumtasa',  lbl:'TUM — tasa de descarga',           un:'tn/h',    def:300,    grp:null,                               hd:false},
   {id:'bprecio',  lbl:'Costo biodiesel (cap. trabajo)',   un:'usd/tn',  def:1100,   grp:'Biodiesel — parámetro compartido', hd:false},
   {id:'bvol',     lbl:'Volumen',                          un:'tn/año',  def:36000,  grp:'Biodiesel logística',              hd:true, dd:{y:2027,m:1}, dot:'bio'},
   {id:'btar',     lbl:'Tarifa servicio',                  un:'usd/tn',  def:20,     grp:null,                               hd:false},
@@ -151,12 +151,12 @@ var PRM=[
   {id:'arevol',   lbl:'Volumen',                          un:'tn/año',  def:6000,   grp:'ARE',                              hd:true, dd:{y:2027,m:1}, dot:'are'},
   {id:'aremar',   lbl:'Margen',                           un:'usd/tn',  def:40,     grp:null,                               hd:false},
   {id:'arecosto', lbl:'Costo del producto',               un:'usd/tn',  def:750,    grp:null,                               hd:false},
-  {id:'arecarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:500,    grp:null,                               hd:false},
+  {id:'arecarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:1000,   grp:null,                               hd:false},
   {id:'aredias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
   {id:'glivol',   lbl:'Volumen',                          un:'tn/año',  def:4800,   grp:'Glicerina',                        hd:true, dd:{y:2027,m:1}, dot:'gli'},
   {id:'glimar',   lbl:'Margen',                           un:'usd/tn',  def:30,     grp:null,                               hd:false},
   {id:'glicosto', lbl:'Costo del producto',               un:'usd/tn',  def:400,    grp:null,                               hd:false},
-  {id:'glicarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:1000,   grp:null,                               hd:false},
+  {id:'glicarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:1400,   grp:null,                               hd:false},
   {id:'glidias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
   {id:'gasvol',   lbl:'Volumen',                          un:'tn/año',  def:12000,  grp:'Gasoil',                           hd:true, dd:{y:2027,m:1}, dot:'gas'},
   {id:'gasmar',   lbl:'Margen',                           un:'usd/tn',  def:30,     grp:null,                               hd:false},
@@ -166,7 +166,7 @@ var PRM=[
   {id:'sebvol',   lbl:'Volumen',                          un:'tn/año',  def:7200,   grp:'Sebo animal',                      hd:true, dd:{y:2027,m:1}, dot:'seb'},
   {id:'sebmar',   lbl:'Margen',                           un:'usd/tn',  def:40,     grp:null,                               hd:false},
   {id:'sebcosto', lbl:'Costo del producto',               un:'usd/tn',  def:850,    grp:null,                               hd:false},
-  {id:'sebcarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:600,    grp:null,                               hd:false},
+  {id:'sebcarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:700,    grp:null,                               hd:false},
   {id:'sebdias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
   {id:'wacc',     lbl:'Tasa de descuento / WACC',         un:'%',       def:12,     grp:'Financiero',                       hd:false},
   {id:'tna',      lbl:'TNA pesos — costo cap. trabajo',   un:'%',       def:37,     grp:null,                               hd:false},
@@ -208,17 +208,20 @@ function gsd(nid){ return D[NEGVOL[nid]]||{y:2027,m:1}; }
 function af(nid,yi){ var sd=gsd(nid),cy=SY+yi; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
 function cf(pid,yi){ var sd=D[pid],cy=SY+yi; if(!sd)return 1; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
 function icf(yi,meses){
-  meses=meses||10;
-  var sd=D['intercon'],cy=SY+yi;
-  var sa=sd.y*12+(sd.m-1), ea=sa+(meses-1);
+  meses=parseInt(meses)||10;
+  var sd=D['intercon'], cy=SY+yi;
+  var startY=parseInt(sd.y), startM=parseInt(sd.m);
+  var sa=startY*12+(startM-1);
+  var ea=sa+meses-1;
   var ys=cy*12, ye=cy*12+11;
-  return Math.max(0,Math.min(ea,ye)-Math.max(sa,ys)+1)/meses;
+  var overlap=Math.max(0,Math.min(ea,ye)-Math.max(sa,ys)+1);
+  return overlap/meses;
 }
 
 // ── Build param object ────────────────────────────────────────
 function gp(){
   return {
-    compra:V.compra, intercon:V.intercon, interconm:V.interconm,
+    compra:+V.compra, intercon:+V.intercon, interconm:+V.interconm,
     serv:V.serv, mant:V.mant, otros:V.otros,
     tumcf:V.tumcf, tumtrn:V.tumtrn, tumk:V.tumk, tumtasa:V.tumtasa,
     bprecio:V.bprecio,
@@ -297,7 +300,15 @@ function calcModel(p,act,dOverride){
   }
   var fi=fiCalc(p), cfs=[];
   for(var yi=0;yi<NY;yi++){
-    var cinv=(D.compra&&(SY+yi)===D.compra.y?p.compra:0)+p.intercon*icf(yi,p.interconm);
+    var cinv=0;
+    var sdC=D['compra'], sdI=D['intercon'];
+    if(sdC && (SY+yi)===parseInt(sdC.y)) cinv+=p.compra;
+    var mI=parseInt(p.interconm)||10;
+    var saI=parseInt(sdI.y)*12+(parseInt(sdI.m)-1);
+    var eaI=saI+mI-1;
+    var ysI=(SY+yi)*12, yeI=(SY+yi)*12+11;
+    var ovI=Math.max(0,Math.min(eaI,yeI)-Math.max(saI,ysI)+1);
+    cinv+=p.intercon*(ovI/mI);
     var opc=p.serv*cf('serv',yi)+p.mant*cf('mant',yi)+p.otros*cf('otros',yi);
     var t=calcTUM(p,act,yi);
     var cfin=calcCFin(p,act,yi);
