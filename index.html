@@ -54,6 +54,7 @@ tr.ok td{color:#0F6E56;font-weight:700}
 .pt input:focus{outline:none;border-color:#378ADD}
 .ds{display:flex;gap:4px;justify-content:center}
 .ds select{font-size:12px;padding:3px 5px;border-radius:var(--r);border:1px solid var(--brd2);background:var(--bg);color:var(--txt);cursor:pointer}
+.fo-badge{font-size:11px;color:var(--txt3);margin-top:6px}
 </style>
 </head>
 <body>
@@ -107,6 +108,7 @@ tr.ok td{color:#0F6E56;font-weight:700}
 </div>
 
 <div id="parametros" class="panel">
+  <div id="fo-info" class="fo-badge" style="margin-bottom:12px"></div>
   <div class="tw">
     <table class="pt">
       <thead><tr>
@@ -124,6 +126,8 @@ tr.ok td{color:#0F6E56;font-weight:700}
 <script>
 var MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 var SY=2026, NY=10;
+var NEG_VOL_KEYS=['bvol','bivol','bukvol','arevol','glivol','gasvol','sebvol'];
+
 var NEG=[
   {id:'bio', name:'Biodiesel logística',   color:'#1D9E75',bc:'#0F6E56'},
   {id:'binc',name:'Biodiesel incremental', color:'#085041',bc:'#04342C'},
@@ -133,6 +137,7 @@ var NEG=[
   {id:'gas', name:'Gasoil',                color:'#BA7517',bc:'#854F0B'},
   {id:'seb', name:'Sebo animal',           color:'#D4537E',bc:'#993556'},
 ];
+
 var PRM=[
   {id:'compra',   lbl:'Compra instalación DOW',           un:'usd',     def:350000, grp:'Inversión',                        hd:true, dd:{y:2026,m:4}},
   {id:'intercon', lbl:'Inversión interconexión ductos',    un:'usd',     def:800000, grp:null,                               hd:true, dd:{y:2026,m:4}},
@@ -145,35 +150,35 @@ var PRM=[
   {id:'tumk',     lbl:'TUM — cargo variable (K)',          un:'usd/tn',  def:0.3,    grp:null,                               hd:false, dec:true},
   {id:'tumtasa',  lbl:'TUM — tasa de descarga',            un:'tn/h',    def:300,    grp:null,                               hd:false},
   {id:'bprecio',  lbl:'Costo biodiesel (cap. trabajo)',    un:'usd/tn',  def:1100,   grp:'Biodiesel — parámetro compartido', hd:false},
-  {id:'bvol',     lbl:'Volumen',                           un:'tn/año',  def:36000,  grp:'Biodiesel logística',              hd:true, dd:{y:2027,m:1}, dot:'bio'},
+  {id:'bvol',     lbl:'Volumen',                           un:'tn/año',  def:36000,  grp:'Biodiesel logística',              hd:true, dd:{y:2027,m:2}, dot:'bio', isNeg:true},
   {id:'btar',     lbl:'Tarifa servicio',                   un:'usd/tn',  def:20,     grp:null,                               hd:false},
   {id:'bcarga',   lbl:'Tn por carga (atraque)',             un:'tn',      def:3000,   grp:null,                               hd:false},
   {id:'bdias',    lbl:'Días ciclo de cobro',                un:'días',    def:37,     grp:null,                               hd:false},
-  {id:'bivol',    lbl:'Volumen',                           un:'tn/mes',  def:2000,   grp:'Biodiesel incremental',            hd:true, dd:{y:2027,m:1}, dot:'binc'},
+  {id:'bivol',    lbl:'Volumen',                           un:'tn/mes',  def:2000,   grp:'Biodiesel incremental',            hd:true, dd:{y:2027,m:2}, dot:'binc', isNeg:true},
   {id:'bicontr',  lbl:'Contribución marginal',             un:'usd/tn',  def:30,     grp:null,                               hd:false},
   {id:'bicarga',  lbl:'Tn por carga (atraque)',             un:'tn',      def:2000,   grp:null,                               hd:false},
   {id:'bidias',   lbl:'Días ciclo de cobro',                un:'días',    def:37,     grp:null,                               hd:false},
-  {id:'bukvol',   lbl:'Volumen',                           un:'tn/año',  def:8400,   grp:'Bunker',                           hd:true, dd:{y:2027,m:1}, dot:'buk'},
+  {id:'bukvol',   lbl:'Volumen',                           un:'tn/año',  def:8400,   grp:'Bunker',                           hd:true, dd:{y:2027,m:2}, dot:'buk', isNeg:true},
   {id:'bukmar',   lbl:'Margen',                            un:'usd/tn',  def:80,     grp:null,                               hd:false},
   {id:'bukcosto', lbl:'Costo del producto',                un:'usd/tn',  def:1200,   grp:null,                               hd:false},
   {id:'bukcarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:350,    grp:null,                               hd:false},
   {id:'bukdias',  lbl:'Días ciclo de cobro',                un:'días',    def:45,     grp:null,                               hd:false},
-  {id:'arevol',   lbl:'Volumen',                           un:'tn/año',  def:6000,   grp:'ARE',                              hd:true, dd:{y:2027,m:1}, dot:'are'},
+  {id:'arevol',   lbl:'Volumen',                           un:'tn/año',  def:6000,   grp:'ARE',                              hd:true, dd:{y:2027,m:2}, dot:'are', isNeg:true},
   {id:'aremar',   lbl:'Margen',                            un:'usd/tn',  def:40,     grp:null,                               hd:false},
   {id:'arecosto', lbl:'Costo del producto',                un:'usd/tn',  def:750,    grp:null,                               hd:false},
   {id:'arecarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:1000,   grp:null,                               hd:false},
   {id:'aredias',  lbl:'Días ciclo de cobro',                un:'días',    def:20,     grp:null,                               hd:false},
-  {id:'glivol',   lbl:'Volumen',                           un:'tn/año',  def:4800,   grp:'Glicerina',                        hd:true, dd:{y:2027,m:1}, dot:'gli'},
+  {id:'glivol',   lbl:'Volumen',                           un:'tn/año',  def:4800,   grp:'Glicerina',                        hd:true, dd:{y:2027,m:2}, dot:'gli', isNeg:true},
   {id:'glimar',   lbl:'Margen',                            un:'usd/tn',  def:30,     grp:null,                               hd:false},
   {id:'glicosto', lbl:'Costo del producto',                un:'usd/tn',  def:400,    grp:null,                               hd:false},
   {id:'glicarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:1400,   grp:null,                               hd:false},
   {id:'glidias',  lbl:'Días ciclo de cobro',                un:'días',    def:20,     grp:null,                               hd:false},
-  {id:'gasvol',   lbl:'Volumen',                           un:'tn/año',  def:12000,  grp:'Gasoil',                           hd:true, dd:{y:2027,m:1}, dot:'gas'},
+  {id:'gasvol',   lbl:'Volumen',                           un:'tn/año',  def:12000,  grp:'Gasoil',                           hd:true, dd:{y:2027,m:2}, dot:'gas', isNeg:true},
   {id:'gasmar',   lbl:'Margen',                            un:'usd/tn',  def:30,     grp:null,                               hd:false},
   {id:'gascosto', lbl:'Costo del producto',                un:'usd/tn',  def:650,    grp:null,                               hd:false},
   {id:'gascarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:3000,   grp:null,                               hd:false},
   {id:'gasdias',  lbl:'Días ciclo de cobro',                un:'días',    def:75,     grp:null,                               hd:false},
-  {id:'sebvol',   lbl:'Volumen',                           un:'tn/año',  def:7200,   grp:'Sebo animal',                      hd:true, dd:{y:2027,m:1}, dot:'seb'},
+  {id:'sebvol',   lbl:'Volumen',                           un:'tn/año',  def:7200,   grp:'Sebo animal',                      hd:true, dd:{y:2027,m:2}, dot:'seb', isNeg:true},
   {id:'sebmar',   lbl:'Margen',                            un:'usd/tn',  def:40,     grp:null,                               hd:false},
   {id:'sebcosto', lbl:'Costo del producto',                un:'usd/tn',  def:850,    grp:null,                               hd:false},
   {id:'sebcarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:700,    grp:null,                               hd:false},
@@ -212,16 +217,30 @@ function dark(){ return window.matchMedia&&window.matchMedia('(prefers-color-sch
 function cc(){ var d=dark(); return {grid:d?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)',tick:d?'#aaa':'#666'}; }
 
 var NEGVOL={bio:'bvol',binc:'bivol',buk:'bukvol',are:'arevol',gli:'glivol',gas:'gasvol',seb:'sebvol'};
-function gsd(nid){ return D[NEGVOL[nid]]||{y:2027,m:1}; }
+function gsd(nid){ return D[NEGVOL[nid]]||{y:2027,m:2}; }
 function af(nid,yi){ var sd=gsd(nid),cy=SY+yi; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
 function cf(pid,yi){ var sd=D[pid],cy=SY+yi; if(!sd)return 1; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
-function icf(yi,meses){
-  meses=parseInt(meses)||10;
-  var sd=D['intercon'],cy=SY+yi;
-  var sa=parseInt(sd.y)*12+(parseInt(sd.m)-1);
-  var ea=sa+meses-1;
-  var ys=cy*12, ye=cy*12+11;
-  return Math.max(0,Math.min(ea,ye)-Math.max(sa,ys)+1)/meses;
+
+function finObra(){
+  var sd=D['intercon'], meses=parseInt(V.interconm)||10;
+  var abs=parseInt(sd.y)*12+(parseInt(sd.m)-1)+meses;
+  return {y:Math.floor(abs/12), m:(abs%12)+1};
+}
+
+function foAbs(){ var fo=finObra(); return fo.y*12+(fo.m-1); }
+
+function enforceMinDate(){
+  var minAbs=foAbs();
+  NEG_VOL_KEYS.forEach(function(k){
+    if(!D[k]) D[k]={y:2027,m:2};
+    var cur=parseInt(D[k].y)*12+(parseInt(D[k].m)-1);
+    if(cur<minAbs){
+      D[k]={y:Math.floor(minAbs/12), m:(minAbs%12)+1};
+    }
+  });
+  var fo=finObra();
+  var el=document.getElementById('fo-info');
+  if(el) el.textContent='Fin de obra interconexión: '+MO[fo.m-1]+' '+fo.y+' — los negocios no pueden comenzar antes de esta fecha.';
 }
 
 function gp(){
@@ -245,6 +264,7 @@ function tumPA(tnCarga,p){
   var cf=p.tumcf||9000,trn=p.tumtrn||15000,k=p.tumk||0.3,tasa=p.tumtasa||300;
   return cf+trn*k*(tnCarga/tasa/24);
 }
+
 function calcTUM(p,act,yi){
   var cfg={
     bio:{vol:p.bvol,carga:p.bcarga}, binc:{vol:p.bivol,carga:p.bicarga},
@@ -255,7 +275,7 @@ function calcTUM(p,act,yi){
   var t=0;
   NEG.forEach(function(n){
     if(!act[n.id]) return;
-    var c=cfg[n.id],frac=(yi===undefined?1:af(n.id,yi));
+    var c=cfg[n.id], frac=(yi===undefined?1:af(n.id,yi));
     t+=tumPA(c.carga,p)*(c.vol*frac/c.carga);
   });
   return t;
@@ -299,13 +319,13 @@ function calcModel(p,act,dOverride){
     Object.keys(D).forEach(function(k){ savedD[k]={y:D[k].y,m:D[k].m}; });
     Object.keys(dOverride).forEach(function(k){ D[k]=dOverride[k]; });
   }
-  var fi=fiCalc(p),cfs=[];
+  var fi=fiCalc(p), cfs=[];
   for(var yi=0;yi<NY;yi++){
-    var sdC=D['compra'],sdI=D['intercon'];
+    var sdC=D['compra'], sdI=D['intercon'];
     var cinv=(sdC&&(SY+yi)===parseInt(sdC.y)?p.compra:0);
     var mI=parseInt(p.interconm)||10;
-    var saI=parseInt(sdI.y)*12+(parseInt(sdI.m)-1),eaI=saI+mI-1;
-    var ysI=(SY+yi)*12,yeI=(SY+yi)*12+11;
+    var saI=parseInt(sdI.y)*12+(parseInt(sdI.m)-1), eaI=saI+mI-1;
+    var ysI=(SY+yi)*12, yeI=(SY+yi)*12+11;
     cinv+=p.intercon*(Math.max(0,Math.min(eaI,yeI)-Math.max(saI,ysI)+1)/mI);
     var opc=p.serv*cf('serv',yi)+p.mant*cf('mant',yi)+p.otros*cf('otros',yi);
     var t=calcTUM(p,act,yi);
@@ -325,14 +345,15 @@ function calcModel(p,act,dOverride){
     }while(Math.abs(npv)>0.1&&it<500);
     return mid;
   }
-  var tir=tirCalc(cfs),acc=0,pb=null,acum=[];
+  var tir=tirCalc(cfs), acc=0, pb=null, acum=[];
   for(var j=0;j<NY;j++){
     acc+=cfs[j]; acum.push(acc);
     if(acc>=0&&pb===null&&j>0){ pb=(j-1)+(-(acc-cfs[j])/cfs[j]); }
   }
-  var tumR=calcTUM(p,act),cFinR=calcCFin(p,act);
-  var opR=p.serv+p.mant+p.otros,ingR=0;
+  var tumR=calcTUM(p,act), cFinR=calcCFin(p,act);
+  var opR=p.serv+p.mant+p.otros, ingR=0;
   NEG.forEach(function(n){ if(act[n.id]) ingR+=fi[n.id]; });
+  if(savedD){ Object.keys(savedD).forEach(function(k){ D[k]=savedD[k]; }); }
   return {fi:fi,ingR:ingR,tum:tumR,opR:opR,cFin:cFinR,
     costoR:opR+tumR+cFinR,fcR:ingR-opR-tumR-cFinR,
     cfs:cfs,acum:acum,van:van,tir:tir,pb:pb};
@@ -347,6 +368,7 @@ function saveScenario(){
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
+
 function loadScenario(e){
   var file=e.target.files[0]; if(!file) return;
   var reader=new FileReader();
@@ -379,12 +401,9 @@ function buildPT(){
     var inp=document.createElement('input'); inp.type='text';
     inp.setAttribute('data-id',pr.id);
     inp.value=pr.dec?V[pr.id].toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}):nf(V[pr.id]);
-    inp.addEventListener('focus',function(){
-      var pid=this.getAttribute('data-id');
-      this.value=V[pid];
-    });
+    inp.addEventListener('focus',function(){ this.value=V[this.getAttribute('data-id')]; });
     inp.addEventListener('blur',function(){
-      var pid=this.getAttribute('data-id'),v=pi(this.value);
+      var pid=this.getAttribute('data-id'), v=pi(this.value);
       var pr2=PRM.filter(function(p){return p.id===pid;})[0];
       if(!isNaN(v)&&v>=0){
         V[pid]=v;
@@ -398,13 +417,27 @@ function buildPT(){
     t3.appendChild(inp); row.appendChild(t3);
     var t4=document.createElement('td');
     if(pr.hd){
-      var sd=D[pr.id],wr=document.createElement('div'); wr.className='ds';
+      var sd=D[pr.id], wr=document.createElement('div'); wr.className='ds';
       var ms=document.createElement('select');
-      MO.forEach(function(m,i){ var o=document.createElement('option'); o.value=i+1; o.textContent=m; if(sd.m===i+1)o.selected=true; ms.appendChild(o); });
-      ms.addEventListener('change',(function(pid){ return function(e){ D[pid].m=parseInt(e.target.value); update(); }; })(pr.id));
+      MO.forEach(function(m,i){ var o=document.createElement('option'); o.value=i+1; o.textContent=m; if(parseInt(sd.m)===i+1)o.selected=true; ms.appendChild(o); });
+      ms.addEventListener('change',(function(pid,isNeg){ return function(e){
+        var newM=parseInt(e.target.value);
+        if(isNeg){
+          var minA=foAbs(), newA=parseInt(D[pid].y)*12+(newM-1);
+          if(newA<minA){ e.target.value=parseInt(D[pid].m); return; }
+        }
+        D[pid].m=newM; update();
+      }; })(pr.id,!!pr.isNeg));
       var ys=document.createElement('select');
-      for(var y=2026;y<=2032;y++){ var o=document.createElement('option'); o.value=y; o.textContent=y; if(sd.y===y)o.selected=true; ys.appendChild(o); }
-      ys.addEventListener('change',(function(pid){ return function(e){ D[pid].y=parseInt(e.target.value); update(); }; })(pr.id));
+      for(var y=2026;y<=2032;y++){ var o=document.createElement('option'); o.value=y; o.textContent=y; if(parseInt(sd.y)===y)o.selected=true; ys.appendChild(o); }
+      ys.addEventListener('change',(function(pid,isNeg){ return function(e){
+        var newY=parseInt(e.target.value);
+        if(isNeg){
+          var minA=foAbs(), newA=newY*12+(parseInt(D[pid].m)-1);
+          if(newA<minA){ e.target.value=parseInt(D[pid].y); return; }
+        }
+        D[pid].y=newY; update();
+      }; })(pr.id,!!pr.isNeg));
       wr.appendChild(ms); wr.appendChild(ys); t4.appendChild(wr);
     } else { t4.style.color='var(--txt3)'; t4.textContent='—'; }
     row.appendChild(t4); tb.appendChild(row);
@@ -412,9 +445,9 @@ function buildPT(){
 }
 
 function buildBG(p){
-  var fi_=fiCalc(p),g=document.getElementById('bgrid'); g.innerHTML='';
+  var fi_=fiCalc(p), g=document.getElementById('bgrid'); g.innerHTML='';
   NEG.forEach(function(n){
-    var on=ACT[n.id],sd=gsd(n.id),d=document.createElement('div');
+    var on=ACT[n.id], sd=gsd(n.id), d=document.createElement('div');
     d.className='bc';
     d.style.background=on?n.color+'22':'var(--bg2)';
     d.style.borderColor=on?n.bc:'var(--brd)';
@@ -468,7 +501,7 @@ function renderR(p,m){
 }
 
 function renderF(m){
-  var c=cc(),yrs=Array.from({length:NY},function(_,i){return SY+i;});
+  var c=cc(), yrs=Array.from({length:NY},function(_,i){return SY+i;});
   if(CH.fl) CH.fl.destroy();
   CH.fl=new Chart(document.getElementById('cFlujo'),{
     type:'bar',
@@ -515,18 +548,26 @@ function renderS(p){
   mkSensChart('sTIRdelay',delays.map(function(v){return v===0?'Sin delay':'+'+v+'m';}),
     delays.map(function(del){
       var dOv={};
-      volKeys.forEach(function(k){ var sd=D[k]||{y:2027,m:1},am=sd.m-1+del,ay=sd.y+Math.floor(am/12); dOv[k]={y:ay,m:(am%12)+1}; });
+      volKeys.forEach(function(k){ var sd=D[k]||{y:2027,m:2},am=sd.m-1+del,ay=sd.y+Math.floor(am/12); dOv[k]={y:ay,m:(am%12)+1}; });
       var m=calcModel(p,ACT,dOv); return m.tir!==null?m.tir*100:null;
     }),'TIR (%)',p.wacc*100,c);
 }
 
-function update(){ var p=gp(),m=calcModel(p); buildBG(p); renderR(p,m); renderF(m); renderS(p); }
+function update(){
+  enforceMinDate();
+  var p=gp(), m=calcModel(p);
+  buildBG(p); renderR(p,m); renderF(m); renderS(p);
+  buildPT();
+}
+
 function setAll(v){ NEG.forEach(function(n){ACT[n.id]=v;}); update(); }
+
 function showTab(id){
   var ids=['resumen','flujo','sensibilidad','parametros'];
   document.querySelectorAll('.tab').forEach(function(t,i){ t.classList.toggle('active',ids[i]===id); });
   document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active',p.id===id); });
 }
+
 buildPT(); update();
 </script>
 </body>
