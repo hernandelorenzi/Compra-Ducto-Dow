@@ -57,20 +57,26 @@ tr.ok td{color:#0F6E56;font-weight:700}
 </style>
 </head>
 <body>
+
 <div class="sbar">
   <div class="sec" style="margin:0">Negocios activos en el escenario</div>
   <div class="bgrid" id="bgrid"></div>
   <div class="qbs">
     <button class="qb" onclick="setAll(true)">Activar todos</button>
     <button class="qb" onclick="setAll(false)">Desactivar todos</button>
+    <button class="qb" onclick="saveScenario()">Guardar escenario</button>
+    <button class="qb" onclick="document.getElementById('loadFile').click()">Cargar escenario</button>
+    <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadScenario(event)">
   </div>
 </div>
+
 <div class="tabs">
   <button class="tab active" onclick="showTab('resumen')">Resumen</button>
   <button class="tab" onclick="showTab('flujo')">Flujo de caja</button>
   <button class="tab" onclick="showTab('sensibilidad')">Sensibilidad</button>
   <button class="tab" onclick="showTab('parametros')">Parámetros</button>
 </div>
+
 <div id="resumen" class="panel active">
   <div class="mg">
     <div class="mc"><div class="ml">VAN (10 años)</div><div class="mv" id="m-van">—</div></div>
@@ -83,11 +89,13 @@ tr.ok td{color:#0F6E56;font-weight:700}
   <div class="sec">Ingresos y costos anuales en régimen</div>
   <div id="waterfall"></div>
 </div>
+
 <div id="flujo" class="panel">
   <div class="sec" style="margin-top:0">Flujo de caja anual y acumulado (usd)</div>
   <div class="cw" style="height:280px"><canvas id="cFlujo"></canvas></div>
   <div class="tw"><table id="ftable"></table></div>
 </div>
+
 <div id="sensibilidad" class="panel">
   <p style="font-size:13px;color:var(--txt2);margin-bottom:1.2rem">Variación ante cambios en parámetros clave. Línea punteada roja = WACC actual.</p>
   <div class="sg">
@@ -97,6 +105,7 @@ tr.ok td{color:#0F6E56;font-weight:700}
     <div><div class="sec" style="margin-top:0">TIR vs delay inicio operaciones</div><div class="cw" style="height:200px"><canvas id="sTIRdelay"></canvas></div></div>
   </div>
 </div>
+
 <div id="parametros" class="panel">
   <div class="tw">
     <table class="pt">
@@ -110,6 +119,7 @@ tr.ok td{color:#0F6E56;font-weight:700}
     </table>
   </div>
 </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 var MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -124,54 +134,54 @@ var NEG=[
   {id:'seb', name:'Sebo animal',           color:'#D4537E',bc:'#993556'},
 ];
 var PRM=[
-  {id:'compra',   lbl:'Compra instalación DOW',          un:'usd',     def:350000, grp:'Inversión',                        hd:true, dd:{y:2026,m:4}},
-  {id:'intercon', lbl:'Inversión interconexión ductos',   un:'usd',     def:800000, grp:null,                               hd:true, dd:{y:2026,m:4}},
-  {id:'interconm',lbl:'Duración obra interconexión',      un:'meses',   def:10,     grp:null,                               hd:false},
-  {id:'serv',     lbl:'Servidumbre de paso (Pampa)',      un:'usd/año', def:18000,  grp:'Costos operativos',                hd:true, dd:{y:2026,m:4}},
-  {id:'mant',     lbl:'Mantenimiento ductos/scrapper',    un:'usd/año', def:15000,  grp:null,                               hd:true, dd:{y:2026,m:4}},
-  {id:'otros',    lbl:'Otros fijos (seguros, etc.)',      un:'usd/año', def:7000,   grp:null,                               hd:true, dd:{y:2026,m:4}},
-  {id:'tumcf',    lbl:'TUM — cargo fijo por atraque',     un:'usd',     def:9000,   grp:'Parámetros TUM (muelle)',          hd:false},
-  {id:'tumtrn',   lbl:'TUM — tamaño útil buque (TRN)',    un:'tn',      def:15000,  grp:null,                               hd:false},
-  {id:'tumk',     lbl:'TUM — cargo variable (K)',         un:'usd/tn',  def:0.3,    grp:null,                               hd:false, dec:true},
-  {id:'tumtasa',  lbl:'TUM — tasa de descarga',           un:'tn/h',    def:300,    grp:null,                               hd:false},
-  {id:'bprecio',  lbl:'Costo biodiesel (cap. trabajo)',   un:'usd/tn',  def:1100,   grp:'Biodiesel — parámetro compartido', hd:false},
-  {id:'bvol',     lbl:'Volumen',                          un:'tn/año',  def:36000,  grp:'Biodiesel logística',              hd:true, dd:{y:2027,m:1}, dot:'bio'},
-  {id:'btar',     lbl:'Tarifa servicio',                  un:'usd/tn',  def:20,     grp:null,                               hd:false},
-  {id:'bcarga',   lbl:'Tn por carga (atraque)',            un:'tn',      def:3000,   grp:null,                               hd:false},
-  {id:'bdias',    lbl:'Días ciclo de cobro',               un:'días',    def:37,     grp:null,                               hd:false},
-  {id:'bivol',    lbl:'Volumen',                          un:'tn/mes',  def:2000,   grp:'Biodiesel incremental',            hd:true, dd:{y:2027,m:1}, dot:'binc'},
-  {id:'bicontr',  lbl:'Contribución marginal',            un:'usd/tn',  def:30,     grp:null,                               hd:false},
-  {id:'bicarga',  lbl:'Tn por carga (atraque)',            un:'tn',      def:2000,   grp:null,                               hd:false},
-  {id:'bidias',   lbl:'Días ciclo de cobro',               un:'días',    def:37,     grp:null,                               hd:false},
-  {id:'bukvol',   lbl:'Volumen',                          un:'tn/año',  def:8400,   grp:'Bunker',                           hd:true, dd:{y:2027,m:1}, dot:'buk'},
-  {id:'bukmar',   lbl:'Margen',                           un:'usd/tn',  def:80,     grp:null,                               hd:false},
-  {id:'bukcosto', lbl:'Costo del producto',               un:'usd/tn',  def:1200,   grp:null,                               hd:false},
-  {id:'bukcarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:350,    grp:null,                               hd:false},
-  {id:'bukdias',  lbl:'Días ciclo de cobro',               un:'días',    def:45,     grp:null,                               hd:false},
-  {id:'arevol',   lbl:'Volumen',                          un:'tn/año',  def:6000,   grp:'ARE',                              hd:true, dd:{y:2027,m:1}, dot:'are'},
-  {id:'aremar',   lbl:'Margen',                           un:'usd/tn',  def:40,     grp:null,                               hd:false},
-  {id:'arecosto', lbl:'Costo del producto',               un:'usd/tn',  def:750,    grp:null,                               hd:false},
-  {id:'arecarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:1000,   grp:null,                               hd:false},
-  {id:'aredias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
-  {id:'glivol',   lbl:'Volumen',                          un:'tn/año',  def:4800,   grp:'Glicerina',                        hd:true, dd:{y:2027,m:1}, dot:'gli'},
-  {id:'glimar',   lbl:'Margen',                           un:'usd/tn',  def:30,     grp:null,                               hd:false},
-  {id:'glicosto', lbl:'Costo del producto',               un:'usd/tn',  def:400,    grp:null,                               hd:false},
-  {id:'glicarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:1400,   grp:null,                               hd:false},
-  {id:'glidias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
-  {id:'gasvol',   lbl:'Volumen',                          un:'tn/año',  def:12000,  grp:'Gasoil',                           hd:true, dd:{y:2027,m:1}, dot:'gas'},
-  {id:'gasmar',   lbl:'Margen',                           un:'usd/tn',  def:30,     grp:null,                               hd:false},
-  {id:'gascosto', lbl:'Costo del producto',               un:'usd/tn',  def:650,    grp:null,                               hd:false},
-  {id:'gascarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:3000,   grp:null,                               hd:false},
-  {id:'gasdias',  lbl:'Días ciclo de cobro',               un:'días',    def:75,     grp:null,                               hd:false},
-  {id:'sebvol',   lbl:'Volumen',                          un:'tn/año',  def:7200,   grp:'Sebo animal',                      hd:true, dd:{y:2027,m:1}, dot:'seb'},
-  {id:'sebmar',   lbl:'Margen',                           un:'usd/tn',  def:40,     grp:null,                               hd:false},
-  {id:'sebcosto', lbl:'Costo del producto',               un:'usd/tn',  def:850,    grp:null,                               hd:false},
-  {id:'sebcarga', lbl:'Tn por carga (atraque)',            un:'tn',      def:700,    grp:null,                               hd:false},
-  {id:'sebdias',  lbl:'Días ciclo de cobro',               un:'días',    def:20,     grp:null,                               hd:false},
-  {id:'wacc',     lbl:'Tasa de descuento / WACC',         un:'%',       def:12,     grp:'Financiero',                       hd:false},
-  {id:'tna',      lbl:'TNA pesos — costo cap. trabajo',   un:'%',       def:37,     grp:null,                               hd:false},
-  {id:'tc',       lbl:'Tipo de cambio ars/usd',           un:'ars/usd', def:1200,   grp:null,                               hd:false},
-  {id:'diasact',  lbl:'Días ciclo cobro (operación actual)',un:'días',   def:14,     grp:null,                               hd:false},
+  {id:'compra',   lbl:'Compra instalación DOW',           un:'usd',     def:350000, grp:'Inversión',                        hd:true, dd:{y:2026,m:4}},
+  {id:'intercon', lbl:'Inversión interconexión ductos',    un:'usd',     def:800000, grp:null,                               hd:true, dd:{y:2026,m:4}},
+  {id:'interconm',lbl:'Duración obra interconexión',       un:'meses',   def:10,     grp:null,                               hd:false},
+  {id:'serv',     lbl:'Servidumbre de paso (Pampa)',       un:'usd/año', def:18000,  grp:'Costos operativos',                hd:true, dd:{y:2026,m:4}},
+  {id:'mant',     lbl:'Mantenimiento ductos/scrapper',     un:'usd/año', def:15000,  grp:null,                               hd:true, dd:{y:2026,m:4}},
+  {id:'otros',    lbl:'Otros fijos (seguros, etc.)',       un:'usd/año', def:7000,   grp:null,                               hd:true, dd:{y:2026,m:4}},
+  {id:'tumcf',    lbl:'TUM — cargo fijo por atraque',      un:'usd',     def:9000,   grp:'Parámetros TUM (muelle)',          hd:false},
+  {id:'tumtrn',   lbl:'TUM — tamaño útil buque (TRN)',     un:'tn',      def:15000,  grp:null,                               hd:false},
+  {id:'tumk',     lbl:'TUM — cargo variable (K)',          un:'usd/tn',  def:0.3,    grp:null,                               hd:false, dec:true},
+  {id:'tumtasa',  lbl:'TUM — tasa de descarga',            un:'tn/h',    def:300,    grp:null,                               hd:false},
+  {id:'bprecio',  lbl:'Costo biodiesel (cap. trabajo)',    un:'usd/tn',  def:1100,   grp:'Biodiesel — parámetro compartido', hd:false},
+  {id:'bvol',     lbl:'Volumen',                           un:'tn/año',  def:36000,  grp:'Biodiesel logística',              hd:true, dd:{y:2027,m:1}, dot:'bio'},
+  {id:'btar',     lbl:'Tarifa servicio',                   un:'usd/tn',  def:20,     grp:null,                               hd:false},
+  {id:'bcarga',   lbl:'Tn por carga (atraque)',             un:'tn',      def:3000,   grp:null,                               hd:false},
+  {id:'bdias',    lbl:'Días ciclo de cobro',                un:'días',    def:37,     grp:null,                               hd:false},
+  {id:'bivol',    lbl:'Volumen',                           un:'tn/mes',  def:2000,   grp:'Biodiesel incremental',            hd:true, dd:{y:2027,m:1}, dot:'binc'},
+  {id:'bicontr',  lbl:'Contribución marginal',             un:'usd/tn',  def:30,     grp:null,                               hd:false},
+  {id:'bicarga',  lbl:'Tn por carga (atraque)',             un:'tn',      def:2000,   grp:null,                               hd:false},
+  {id:'bidias',   lbl:'Días ciclo de cobro',                un:'días',    def:37,     grp:null,                               hd:false},
+  {id:'bukvol',   lbl:'Volumen',                           un:'tn/año',  def:8400,   grp:'Bunker',                           hd:true, dd:{y:2027,m:1}, dot:'buk'},
+  {id:'bukmar',   lbl:'Margen',                            un:'usd/tn',  def:80,     grp:null,                               hd:false},
+  {id:'bukcosto', lbl:'Costo del producto',                un:'usd/tn',  def:1200,   grp:null,                               hd:false},
+  {id:'bukcarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:350,    grp:null,                               hd:false},
+  {id:'bukdias',  lbl:'Días ciclo de cobro',                un:'días',    def:45,     grp:null,                               hd:false},
+  {id:'arevol',   lbl:'Volumen',                           un:'tn/año',  def:6000,   grp:'ARE',                              hd:true, dd:{y:2027,m:1}, dot:'are'},
+  {id:'aremar',   lbl:'Margen',                            un:'usd/tn',  def:40,     grp:null,                               hd:false},
+  {id:'arecosto', lbl:'Costo del producto',                un:'usd/tn',  def:750,    grp:null,                               hd:false},
+  {id:'arecarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:1000,   grp:null,                               hd:false},
+  {id:'aredias',  lbl:'Días ciclo de cobro',                un:'días',    def:20,     grp:null,                               hd:false},
+  {id:'glivol',   lbl:'Volumen',                           un:'tn/año',  def:4800,   grp:'Glicerina',                        hd:true, dd:{y:2027,m:1}, dot:'gli'},
+  {id:'glimar',   lbl:'Margen',                            un:'usd/tn',  def:30,     grp:null,                               hd:false},
+  {id:'glicosto', lbl:'Costo del producto',                un:'usd/tn',  def:400,    grp:null,                               hd:false},
+  {id:'glicarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:1400,   grp:null,                               hd:false},
+  {id:'glidias',  lbl:'Días ciclo de cobro',                un:'días',    def:20,     grp:null,                               hd:false},
+  {id:'gasvol',   lbl:'Volumen',                           un:'tn/año',  def:12000,  grp:'Gasoil',                           hd:true, dd:{y:2027,m:1}, dot:'gas'},
+  {id:'gasmar',   lbl:'Margen',                            un:'usd/tn',  def:30,     grp:null,                               hd:false},
+  {id:'gascosto', lbl:'Costo del producto',                un:'usd/tn',  def:650,    grp:null,                               hd:false},
+  {id:'gascarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:3000,   grp:null,                               hd:false},
+  {id:'gasdias',  lbl:'Días ciclo de cobro',                un:'días',    def:75,     grp:null,                               hd:false},
+  {id:'sebvol',   lbl:'Volumen',                           un:'tn/año',  def:7200,   grp:'Sebo animal',                      hd:true, dd:{y:2027,m:1}, dot:'seb'},
+  {id:'sebmar',   lbl:'Margen',                            un:'usd/tn',  def:40,     grp:null,                               hd:false},
+  {id:'sebcosto', lbl:'Costo del producto',                un:'usd/tn',  def:850,    grp:null,                               hd:false},
+  {id:'sebcarga', lbl:'Tn por carga (atraque)',             un:'tn',      def:700,    grp:null,                               hd:false},
+  {id:'sebdias',  lbl:'Días ciclo de cobro',                un:'días',    def:20,     grp:null,                               hd:false},
+  {id:'wacc',     lbl:'Tasa de descuento / WACC',          un:'%',       def:12,     grp:'Financiero',                       hd:false},
+  {id:'tna',      lbl:'TNA pesos — costo cap. trabajo',    un:'%',       def:37,     grp:null,                               hd:false},
+  {id:'tc',       lbl:'Tipo de cambio ars/usd',            un:'ars/usd', def:1200,   grp:null,                               hd:false},
+  {id:'diasact',  lbl:'Días ciclo cobro (operación actual)',un:'días',    def:14,     grp:null,                               hd:false},
 ];
 
 var V={}, D={};
@@ -180,17 +190,16 @@ var ACT={};
 NEG.forEach(function(n){ ACT[n.id]=true; });
 var CH={};
 
-// ── Formatters ──────────────────────────────────────────────
-function ri(v){ return Math.round(v); }  // round to integer
+function ri(v){ return Math.round(v); }
 function nf(v){
   if(v!==ri(v)) return v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3});
   return ri(v).toLocaleString('es-AR');
 }
 function ff(v){ return (v<0?'-$':'$')+ri(Math.abs(v)).toLocaleString('es-AR'); }
 function fu(v){
-  var a=ri(Math.abs(v)), s=v<0?'-$':'$';
+  var a=ri(Math.abs(v)),s=v<0?'-$':'$';
   if(a>=1000000) return s+(a/1e6).toFixed(2)+'M';
-  if(a>=1000)    return s+ri(a/1000)+'K';
+  if(a>=1000) return s+ri(a/1000)+'K';
   return s+a.toLocaleString('es-AR');
 }
 function pc(v){ return v.toFixed(1)+'%'; }
@@ -202,44 +211,39 @@ function pi(s){
 function dark(){ return window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches; }
 function cc(){ var d=dark(); return {grid:d?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.07)',tick:d?'#aaa':'#666'}; }
 
-// ── Date helpers ─────────────────────────────────────────────
 var NEGVOL={bio:'bvol',binc:'bivol',buk:'bukvol',are:'arevol',gli:'glivol',gas:'gasvol',seb:'sebvol'};
 function gsd(nid){ return D[NEGVOL[nid]]||{y:2027,m:1}; }
 function af(nid,yi){ var sd=gsd(nid),cy=SY+yi; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
 function cf(pid,yi){ var sd=D[pid],cy=SY+yi; if(!sd)return 1; if(cy<sd.y)return 0; if(cy>sd.y)return 1; return(12-sd.m+1)/12; }
 function icf(yi,meses){
   meses=parseInt(meses)||10;
-  var sd=D['intercon'], cy=SY+yi;
-  var startY=parseInt(sd.y), startM=parseInt(sd.m);
-  var sa=startY*12+(startM-1);
+  var sd=D['intercon'],cy=SY+yi;
+  var sa=parseInt(sd.y)*12+(parseInt(sd.m)-1);
   var ea=sa+meses-1;
   var ys=cy*12, ye=cy*12+11;
-  var overlap=Math.max(0,Math.min(ea,ye)-Math.max(sa,ys)+1);
-  return overlap/meses;
+  return Math.max(0,Math.min(ea,ye)-Math.max(sa,ys)+1)/meses;
 }
 
-// ── Build param object ────────────────────────────────────────
 function gp(){
   return {
     compra:+V.compra, intercon:+V.intercon, interconm:+V.interconm,
-    serv:V.serv, mant:V.mant, otros:V.otros,
-    tumcf:V.tumcf, tumtrn:V.tumtrn, tumk:V.tumk, tumtasa:V.tumtasa,
-    bprecio:V.bprecio,
-    bvol:V.bvol,   btar:V.btar,   bcarga:V.bcarga,   bdias:V.bdias,
-    bivol:V.bivol*12, bicontr:V.bicontr, bicarga:V.bicarga, bidias:V.bidias,
-    bukvol:V.bukvol, bukmar:V.bukmar, bukcosto:V.bukcosto, bukcarga:V.bukcarga, bukdias:V.bukdias,
-    arevol:V.arevol, aremar:V.aremar, arecosto:V.arecosto, arecarga:V.arecarga, aredias:V.aredias,
-    glivol:V.glivol, glimar:V.glimar, glicosto:V.glicosto, glicarga:V.glicarga, glidias:V.glidias,
-    gasvol:V.gasvol, gasmar:V.gasmar, gascosto:V.gascosto, gascarga:V.gascarga, gasdias:V.gasdias,
-    sebvol:V.sebvol, sebmar:V.sebmar, sebcosto:V.sebcosto, sebcarga:V.sebcarga, sebdias:V.sebdias,
-    wacc:V.wacc/100, tna:V.tna/100, tc:V.tc, diasact:V.diasact
+    serv:+V.serv, mant:+V.mant, otros:+V.otros,
+    tumcf:+V.tumcf, tumtrn:+V.tumtrn, tumk:+V.tumk, tumtasa:+V.tumtasa,
+    bprecio:+V.bprecio,
+    bvol:+V.bvol, btar:+V.btar, bcarga:+V.bcarga, bdias:+V.bdias,
+    bivol:+V.bivol*12, bicontr:+V.bicontr, bicarga:+V.bicarga, bidias:+V.bidias,
+    bukvol:+V.bukvol, bukmar:+V.bukmar, bukcosto:+V.bukcosto, bukcarga:+V.bukcarga, bukdias:+V.bukdias,
+    arevol:+V.arevol, aremar:+V.aremar, arecosto:+V.arecosto, arecarga:+V.arecarga, aredias:+V.aredias,
+    glivol:+V.glivol, glimar:+V.glimar, glicosto:+V.glicosto, glicarga:+V.glicarga, glidias:+V.glidias,
+    gasvol:+V.gasvol, gasmar:+V.gasmar, gascosto:+V.gascosto, gascarga:+V.gascarga, gasdias:+V.gasdias,
+    sebvol:+V.sebvol, sebmar:+V.sebmar, sebcosto:+V.sebcosto, sebcarga:+V.sebcarga, sebdias:+V.sebdias,
+    wacc:+V.wacc/100, tna:+V.tna/100, tc:+V.tc, diasact:+V.diasact
   };
 }
 
-// ── TUM ───────────────────────────────────────────────────────
 function tumPA(tnCarga,p){
-  var cf=p.tumcf||9000, trn=p.tumtrn||15000, k=p.tumk||0.3, tasa=p.tumtasa||150;
-  return cf + trn*k*(tnCarga/tasa/24);
+  var cf=p.tumcf||9000,trn=p.tumtrn||15000,k=p.tumk||0.3,tasa=p.tumtasa||300;
+  return cf+trn*k*(tnCarga/tasa/24);
 }
 function calcTUM(p,act,yi){
   var cfg={
@@ -251,13 +255,12 @@ function calcTUM(p,act,yi){
   var t=0;
   NEG.forEach(function(n){
     if(!act[n.id]) return;
-    var c=cfg[n.id], frac=(yi===undefined?1:af(n.id,yi));
+    var c=cfg[n.id],frac=(yi===undefined?1:af(n.id,yi));
     t+=tumPA(c.carga,p)*(c.vol*frac/c.carga);
   });
   return t;
 }
 
-// ── Costo financiero ──────────────────────────────────────────
 function calcCFin(p,act,yi){
   var items=[
     {id:'bio', vol:p.bvol,   costo:p.bprecio,  dias:p.bdias},
@@ -279,7 +282,6 @@ function calcCFin(p,act,yi){
   return total;
 }
 
-// ── Ingresos ──────────────────────────────────────────────────
 function fiCalc(p){
   return {
     bio:p.bvol*p.btar, binc:p.bivol*p.bicontr,
@@ -289,7 +291,6 @@ function fiCalc(p){
   };
 }
 
-// ── Modelo ────────────────────────────────────────────────────
 function calcModel(p,act,dOverride){
   act=act||ACT;
   var savedD=null;
@@ -298,17 +299,14 @@ function calcModel(p,act,dOverride){
     Object.keys(D).forEach(function(k){ savedD[k]={y:D[k].y,m:D[k].m}; });
     Object.keys(dOverride).forEach(function(k){ D[k]=dOverride[k]; });
   }
-  var fi=fiCalc(p), cfs=[];
+  var fi=fiCalc(p),cfs=[];
   for(var yi=0;yi<NY;yi++){
-    var cinv=0;
-    var sdC=D['compra'], sdI=D['intercon'];
-    if(sdC && (SY+yi)===parseInt(sdC.y)) cinv+=p.compra;
+    var sdC=D['compra'],sdI=D['intercon'];
+    var cinv=(sdC&&(SY+yi)===parseInt(sdC.y)?p.compra:0);
     var mI=parseInt(p.interconm)||10;
-    var saI=parseInt(sdI.y)*12+(parseInt(sdI.m)-1);
-    var eaI=saI+mI-1;
-    var ysI=(SY+yi)*12, yeI=(SY+yi)*12+11;
-    var ovI=Math.max(0,Math.min(eaI,yeI)-Math.max(saI,ysI)+1);
-    cinv+=p.intercon*(ovI/mI);
+    var saI=parseInt(sdI.y)*12+(parseInt(sdI.m)-1),eaI=saI+mI-1;
+    var ysI=(SY+yi)*12,yeI=(SY+yi)*12+11;
+    cinv+=p.intercon*(Math.max(0,Math.min(eaI,yeI)-Math.max(saI,ysI)+1)/mI);
     var opc=p.serv*cf('serv',yi)+p.mant*cf('mant',yi)+p.otros*cf('otros',yi);
     var t=calcTUM(p,act,yi);
     var cfin=calcCFin(p,act,yi);
@@ -332,15 +330,39 @@ function calcModel(p,act,dOverride){
     acc+=cfs[j]; acum.push(acc);
     if(acc>=0&&pb===null&&j>0){ pb=(j-1)+(-(acc-cfs[j])/cfs[j]); }
   }
-  var tumR=calcTUM(p,act), cFinR=calcCFin(p,act);
-  var opR=p.serv+p.mant+p.otros, ingR=0;
+  var tumR=calcTUM(p,act),cFinR=calcCFin(p,act);
+  var opR=p.serv+p.mant+p.otros,ingR=0;
   NEG.forEach(function(n){ if(act[n.id]) ingR+=fi[n.id]; });
-  return {fi:fi, ingR:ingR, tum:tumR, opR:opR, cFin:cFinR,
-    costoR:opR+tumR+cFinR, fcR:ingR-opR-tumR-cFinR,
-    cfs:cfs, acum:acum, van:van, tir:tir, pb:pb};
+  return {fi:fi,ingR:ingR,tum:tumR,opR:opR,cFin:cFinR,
+    costoR:opR+tumR+cFinR,fcR:ingR-opR-tumR-cFinR,
+    cfs:cfs,acum:acum,van:van,tir:tir,pb:pb};
 }
 
-// ── Tabla parámetros ──────────────────────────────────────────
+function saveScenario(){
+  var data={V:V,D:D,ACT:ACT};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='escenario-explora.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function loadScenario(e){
+  var file=e.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var s=JSON.parse(ev.target.result);
+      if(s.V) Object.keys(s.V).forEach(function(k){ V[k]=s.V[k]; });
+      if(s.D) Object.keys(s.D).forEach(function(k){ D[k]=s.D[k]; });
+      if(s.ACT) Object.keys(s.ACT).forEach(function(k){ ACT[k]=s.ACT[k]; });
+      buildPT(); update();
+      document.getElementById('loadFile').value='';
+    } catch(err){ alert('Error al cargar: archivo inválido'); }
+  };
+  reader.readAsText(file);
+}
+
 function buildPT(){
   var tb=document.getElementById('ptbody'); tb.innerHTML='';
   PRM.forEach(function(pr){
@@ -356,25 +378,27 @@ function buildPT(){
     var t3=document.createElement('td');
     var inp=document.createElement('input'); inp.type='text';
     inp.setAttribute('data-id',pr.id);
-    inp.value=pr.dec ? pr.def.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}) : nf(pr.def);
-    inp.addEventListener('focus',function(){ this.value=V[this.getAttribute('data-id')]; });
+    inp.value=pr.dec?V[pr.id].toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}):nf(V[pr.id]);
+    inp.addEventListener('focus',function(){
+      var pid=this.getAttribute('data-id');
+      this.value=V[pid];
+    });
     inp.addEventListener('blur',function(){
-      var pid=this.getAttribute('data-id'), v=pi(this.value);
+      var pid=this.getAttribute('data-id'),v=pi(this.value);
+      var pr2=PRM.filter(function(p){return p.id===pid;})[0];
       if(!isNaN(v)&&v>=0){
         V[pid]=v;
-        var pr2=PRM.filter(function(p){return p.id===pid;})[0];
-        this.value=pr2&&pr2.dec ? v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}) : nf(v);
+        this.value=pr2&&pr2.dec?v.toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}):nf(v);
         update();
       } else {
-        var pr3=PRM.filter(function(p){return p.id===pid;})[0];
-        this.value=pr3&&pr3.dec ? V[pid].toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}) : nf(V[pid]);
+        this.value=pr2&&pr2.dec?V[pid].toLocaleString('es-AR',{minimumFractionDigits:1,maximumFractionDigits:3}):nf(V[pid]);
       }
     });
     inp.addEventListener('keydown',function(e){ if(e.key==='Enter')this.blur(); });
     t3.appendChild(inp); row.appendChild(t3);
     var t4=document.createElement('td');
     if(pr.hd){
-      var sd=D[pr.id], wr=document.createElement('div'); wr.className='ds';
+      var sd=D[pr.id],wr=document.createElement('div'); wr.className='ds';
       var ms=document.createElement('select');
       MO.forEach(function(m,i){ var o=document.createElement('option'); o.value=i+1; o.textContent=m; if(sd.m===i+1)o.selected=true; ms.appendChild(o); });
       ms.addEventListener('change',(function(pid){ return function(e){ D[pid].m=parseInt(e.target.value); update(); }; })(pr.id));
@@ -387,11 +411,10 @@ function buildPT(){
   });
 }
 
-// ── Selector de negocios ──────────────────────────────────────
 function buildBG(p){
-  var fi_=fiCalc(p), g=document.getElementById('bgrid'); g.innerHTML='';
+  var fi_=fiCalc(p),g=document.getElementById('bgrid'); g.innerHTML='';
   NEG.forEach(function(n){
-    var on=ACT[n.id], sd=gsd(n.id), d=document.createElement('div');
+    var on=ACT[n.id],sd=gsd(n.id),d=document.createElement('div');
     d.className='bc';
     d.style.background=on?n.color+'22':'var(--bg2)';
     d.style.borderColor=on?n.bc:'var(--brd)';
@@ -405,7 +428,6 @@ function buildBG(p){
   });
 }
 
-// ── Resumen ───────────────────────────────────────────────────
 function renderR(p,m){
   var mv=document.getElementById('m-van'); mv.textContent=fu(m.van); mv.className='mv '+(m.van>=0?'pos':'neg');
   var mt=document.getElementById('m-tir'); mt.textContent=m.tir!==null?pc(m.tir*100):'N/A'; mt.className='mv '+(m.tir!==null&&m.tir>=p.wacc?'pos':'neg');
@@ -415,7 +437,6 @@ function renderR(p,m){
   f.style.width=(m.pb?Math.min(100,m.pb/NY*100):100)+'%';
   f.style.background=m.pb?'#1D9E75':'#D85A30';
   document.getElementById('pbl').textContent=m.pb?m.pb.toFixed(1)+' años':'> '+NY+' años';
-
   var an=NEG.filter(function(n){return ACT[n.id];});
   var rows=[];
   an.forEach(function(n){ rows.push({lbl:n.name,val:m.fi[n.id],color:n.color,type:'ing'}); });
@@ -428,30 +449,26 @@ function renderR(p,m){
   ].forEach(function(c){ rows.push({lbl:c.lbl,val:-c.val,color:'#888780',type:'cost'}); });
   rows.push({lbl:'Total costos',val:-m.costoR,color:'#5F5E5A',type:'subtotal'});
   rows.push({lbl:'Flujo operativo anual',val:m.fcR,color:m.fcR>=0?'#0F6E56':'#993C1D',type:'result'});
-
   var maxAbs=Math.max.apply(null,rows.map(function(r){return Math.abs(r.val);}));
   var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
   rows.forEach(function(r){
-    var isSub=r.type==='subtotal', isRes=r.type==='result';
+    var isSub=r.type==='subtotal',isRes=r.type==='result';
     var indent=isSub||isRes?'':'padding-left:20px;';
     var fw=isSub||isRes?'font-weight:700;':'font-weight:400;';
     var bt=isSub||isRes?'border-top:1px solid var(--brd2);':'';
     var pct=Math.round(Math.abs(r.val)/maxAbs*100);
     var valStr=r.type==='cost'?'-'+ff(Math.abs(r.val)):ff(r.val);
     var valColor=r.type==='cost'?'#993C1D':(r.val>=0?'#0F6E56':'#993C1D');
-    html+='<tr style="'+bt+'">';
-    html+='<td style="padding:5px 8px;width:30%;'+fw+indent+'color:var(--txt2)">'+r.lbl+'</td>';
+    html+='<tr style="'+bt+'"><td style="padding:5px 8px;width:30%;'+fw+indent+'color:var(--txt2)">'+r.lbl+'</td>';
     html+='<td style="padding:5px 8px;width:50%"><div style="background:var(--bg2);border-radius:3px;height:14px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+r.color+';border-radius:3px;opacity:'+(isRes?1:0.8)+'"></div></div></td>';
-    html+='<td style="padding:5px 8px;width:20%;text-align:right;'+fw+'color:'+valColor+'">'+valStr+'</td>';
-    html+='</tr>';
+    html+='<td style="padding:5px 8px;width:20%;text-align:right;'+fw+'color:'+valColor+'">'+valStr+'</td></tr>';
   });
   html+='</table>';
   document.getElementById('waterfall').innerHTML=html;
 }
 
-// ── Flujo ─────────────────────────────────────────────────────
 function renderF(m){
-  var c=cc(), yrs=Array.from({length:NY},function(_,i){return SY+i;});
+  var c=cc(),yrs=Array.from({length:NY},function(_,i){return SY+i;});
   if(CH.fl) CH.fl.destroy();
   CH.fl=new Chart(document.getElementById('cFlujo'),{
     type:'bar',
@@ -469,7 +486,6 @@ function renderF(m){
   document.getElementById('ftable').innerHTML=h+b;
 }
 
-// ── Sensibilidad ──────────────────────────────────────────────
 function mkSensChart(id,labels,data,yLabel,waccRef,c){
   if(CH[id]) CH[id].destroy();
   var isVAN=yLabel.indexOf('VAN')>=0;
@@ -504,7 +520,6 @@ function renderS(p){
     }),'TIR (%)',p.wacc*100,c);
 }
 
-// ── Control ───────────────────────────────────────────────────
 function update(){ var p=gp(),m=calcModel(p); buildBG(p); renderR(p,m); renderF(m); renderS(p); }
 function setAll(v){ NEG.forEach(function(n){ACT[n.id]=v;}); update(); }
 function showTab(id){
