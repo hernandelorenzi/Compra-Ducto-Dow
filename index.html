@@ -55,6 +55,9 @@ tr.ok td{color:#0F6E56;font-weight:700}
 .lb{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0}
 .dash{color:var(--txt3);text-align:center}
 .prob-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:0.5px solid var(--brd)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--bg3);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;cursor:pointer;background:var(--thumb-color,#888)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;border:none;cursor:pointer;background:var(--thumb-color,#888)}
 </style>
 </head>
 <body>
@@ -392,7 +395,7 @@ function buildBG(p){
     nm.style.cssText='font-size:12px;font-weight:500;min-width:130px;color:'+(prob>0?n.bc:'var(--txt2)');
     nm.textContent=n.name;
     var sl=document.createElement('input');sl.type='range';sl.min=0;sl.max=100;sl.step=5;sl.value=Math.round(prob*100);
-    sl.style.cssText='flex:1;accent-color:'+n.color;
+    sl.style.cssText='flex:1;--thumb-color:'+n.color+';accent-color:'+n.color;
     var pl=document.createElement('span');
     pl.id='pl-'+n.id;
     pl.style.cssText='font-size:12px;font-weight:500;min-width:38px;text-align:right;color:'+(prob>0?n.bc:'var(--txt3)');
